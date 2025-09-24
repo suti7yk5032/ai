@@ -45,7 +45,7 @@ type GeminiContents = {
 };
 type GeminiOptions = {
 	contents?: GeminiContents[];
-	systemInstruction?: GeminiSystemInstruction;
+	system_instruction?: GeminiSystemInstruction;
 	tools?: [{}];
 	generationConfig?: object;
 };
@@ -231,10 +231,10 @@ export default class extends Module {
 
 		let geminiOptions: GeminiOptions = {
 			contents: contents,
-			systemInstruction: systemInstruction,
+			system_instruction: systemInstruction,
 			generationConfig: {
 				thinkingConfig: {
-					thinkingBudget: 0,
+					thinkingBudget: -1,
 				},
 			},
 		};
@@ -695,6 +695,7 @@ export default class extends Module {
 		}
 
 		this.log('Replying...');
+		
 		msg.reply(serifs.aichat.post(text, exist.type)).then(reply => {
 			// 履歴に登録
 			if (!exist.history) {
