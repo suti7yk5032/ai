@@ -37,16 +37,17 @@ type GeminiParts = {
 }[];
 type GeminiSystemInstruction = {
 	role: string;
-	parts: [{text: string}]
+	parts: [{text: string}];
 };
 type GeminiContents = {
 	role: string;
 	parts: GeminiParts;
 };
 type GeminiOptions = {
-	contents?: GeminiContents[],
-	systemInstruction?: GeminiSystemInstruction,
-	tools?: [{}]
+	contents?: GeminiContents[];
+	systemInstruction?: GeminiSystemInstruction;
+	tools?: [{}];
+	generationConfig?: object;
 };
 
 type AiChatHist = {
@@ -228,9 +229,14 @@ export default class extends Module {
 		}
 		contents.push({role: 'user', parts: parts});
 
-		let geminiOptions:GeminiOptions = {
+		let geminiOptions: GeminiOptions = {
 			contents: contents,
 			systemInstruction: systemInstruction,
+			generationConfig: {
+				thinkingConfig: {
+					thinkingBudget: 0,
+				},
+			},
 		};
 		// gemini api grounding support. ref:https://github.com/google-gemini/cookbook/blob/09f3b17df1751297798c2b498cae61c6bf710edc/quickstarts/Search_Grounding.ipynb
 		if (aiChat.grounding) {
