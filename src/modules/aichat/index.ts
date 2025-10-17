@@ -45,7 +45,7 @@ type GeminiContents = {
 };
 type GeminiOptions = {
 	contents?: GeminiContents[];
-	system_instruction?: GeminiSystemInstruction;
+	systemInstruction?: GeminiSystemInstruction;
 	tools?: [{}];
 	generationConfig?: object;
 };
@@ -87,7 +87,7 @@ const GEMINI_FLASH = 'gemini-flash';
 const TYPE_PLAMO = 'plamo';
 const GROUNDING_TARGET = 'ggg';
 
-const GEMINI_20_FLASH_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const GEMINI_20_FLASH_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 // const GEMINI_15_FLASH_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 const GEMINI_15_PRO_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
 const PLAMO_API = 'https://platform.preferredai.jp/api/completion/v1/chat/completions';
@@ -231,11 +231,12 @@ export default class extends Module {
 
 		let geminiOptions: GeminiOptions = {
 			contents: contents,
-			system_instruction: systemInstruction,
+			systemInstruction: systemInstruction,
 			generationConfig: {
 				thinkingConfig: {
 					thinkingBudget: -1,
 				},
+				candidate_count: 1,
 			},
 		};
 		// gemini api grounding support. ref:https://github.com/google-gemini/cookbook/blob/09f3b17df1751297798c2b498cae61c6bf710edc/quickstarts/Search_Grounding.ipynb
