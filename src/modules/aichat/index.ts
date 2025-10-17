@@ -273,7 +273,7 @@ export default class extends Module {
 						}
 					}
 					// groundingMetadataを取得
-					let groundingMetadata = '';
+					let groundingMetadata = '\n\n';
 					if (res_data.candidates[0].hasOwnProperty('groundingMetadata')) {
 						// 参考サイト情報
 						if (res_data.candidates[0].groundingMetadata.hasOwnProperty('groundingChunks')) {
