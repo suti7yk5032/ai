@@ -352,8 +352,14 @@ export default class extends Module {
 	}
 
 	@bindThis
-	private async note2base64File(notesId: string) {
-		const noteData = await this.ai.api('notes/show', { noteId: notesId });
+	private async note2base64File(notesId: string, isChat: boolean) {
+		let noteData;
+		if (isChat) {
+			noteData = await this.ai.api('chat/messages/show', { messageId: notesId });
+		} else {
+			noteData = await this.ai.api('notes/show', { noteId: notesId });
+		}
+
 		let files:base64File[] = [];
 		let fileType: string | undefined, filelUrl: string | undefined;
 		if (noteData !== null && noteData.hasOwnProperty('files')) {
@@ -399,7 +405,12 @@ export default class extends Module {
 		}
 
 		// msg.idをもとにnotes/conversationを呼び出し、会話中のidかチェック
-		const conversationData = await this.ai.api('notes/conversation', { noteId: msg.id });
+		let conversationData;
+		if (msg.isChat) {
+			conversationData = undefined;
+		} else {
+			conversationData = await this.ai.api('notes/conversation', { noteId: msg.id });
+		}
 
 		// aichatHistに該当のポストが見つかった場合は会話中のためmentionHoonkでは対応しない
 		let exist : AiChatHist | null = null;
@@ -430,18 +441,20 @@ export default class extends Module {
 			fromMention: true,
 		};
 		// 引用している場合、情報を取得しhistoryとして与える
-		if (msg.quoteId) {
-			const quotedNote = await this.ai.api('notes/show', {
-				noteId: msg.quoteId,
-			});
-			current.history = [
-				{
-					role: 'user',
-					content:
-						'ユーザーが与えた前情報である、引用された文章: ' +
-						quotedNote.text,
-				},
-			];
+		if (!msg.isChat) {
+			if (msg.quoteId) {
+				const quotedNote = await this.ai.api('notes/show', {
+					noteId: msg.quoteId,
+				});
+				current.history = [
+					{
+						role: 'user',
+						content:
+							'ユーザーが与えた前情報である、引用された文章: ' +
+							quotedNote.text,
+					},
+				];
+			}
 		}
 		// AIに問い合わせ
 		const result = await this.handleAiChat(current, msg);
@@ -460,7 +473,12 @@ export default class extends Module {
 		if (msg.text == null) return false;
 
 		// msg.idをもとにnotes/conversationを呼び出し、該当のidかチェック
-		const conversationData = await this.ai.api('notes/conversation', { noteId: msg.id });
+		let conversationData;
+		if (msg.isChat) {
+			conversationData = undefined;
+		} else {
+			conversationData = await this.ai.api('notes/conversation', { noteId: msg.id });
+		}
 
 		// 結果がnullやサイズ0の場合は終了
 		if (conversationData == null || conversationData.length == 0 ) {
@@ -647,7 +665,7 @@ export default class extends Module {
 					msg.reply(serifs.aichat.nothing(exist.type));
 					return false;
 				}
-				const base64Files: base64File[] = await this.note2base64File(msg.id);
+				const base64Files: base64File[] = await this.note2base64File(msg.id, msg.isChat);
 				aiChat = {
 					question: question,
 					prompt: prompt,
@@ -721,7 +739,7 @@ export default class extends Module {
 			this.log('Subscribe&Set Timer...');
 
 			// メンションをsubscribe
-			this.subscribeReply(reply.id, reply.id);
+			this.subscribeReply(reply.id, false, reply.id);
 
 			// タイマーセット
 			this.setTimeoutWithPersistence(TIMEOUT_TIME, {
