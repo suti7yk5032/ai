@@ -8,6 +8,7 @@ import urlToBase64 from '@/utils/url2base64.js';
 import urlToJson from '@/utils/url2json.js';
 import got from 'got';
 import loki from 'lokijs';
+import { isWhileStatement } from 'typescript';
 
 type AiChat = {
 	question: string;
@@ -87,7 +88,7 @@ const GEMINI_FLASH = 'gemini-flash';
 const TYPE_PLAMO = 'plamo';
 const GROUNDING_TARGET = 'ggg';
 
-const GEMINI_20_FLASH_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const GEMINI_20_FLASH_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
 // const GEMINI_15_FLASH_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 const GEMINI_15_PRO_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
 const PLAMO_API = 'https://platform.preferredai.jp/api/completion/v1/chat/completions';
@@ -234,9 +235,8 @@ export default class extends Module {
 			systemInstruction: systemInstruction,
 			generationConfig: {
 				thinkingConfig: {
-					thinkingBudget: -1,
+					thinkingLevel: 'minimal',
 				},
-				candidate_count: 1,
 			},
 		};
 		// gemini api grounding support. ref:https://github.com/google-gemini/cookbook/blob/09f3b17df1751297798c2b498cae61c6bf710edc/quickstarts/Search_Grounding.ipynb
@@ -441,7 +441,21 @@ export default class extends Module {
 			fromMention: true,
 		};
 		// 引用している場合、情報を取得しhistoryとして与える
-		if (!msg.isChat) {
+		if (msg.isChat) {
+			const previusMsg = await this.ai.api('chat/messages/user-timeline', { limit: 4, userId: msg.userId })
+			if (previusMsg !== undefined) {
+				if (previusMsg[2].toUserId === this.ai.account.id) {
+					current.history = [
+						{
+							role: 'user',
+							content:
+								'会話は継続されており、以下がこの前の 文章: ' +
+								previusMsg[2].text,
+						},
+					];
+				}
+			}
+		} else {
 			if (msg.quoteId) {
 				const quotedNote = await this.ai.api('notes/show', {
 					noteId: msg.quoteId,
@@ -601,7 +615,7 @@ export default class extends Module {
 		let targetedMessage = choseNote;
 		if (choseNote.extractedText == undefined) {
 			const data = await this.ai.api('notes/show', { noteId: choseNote.id });
-			targetedMessage = new Message(this.ai, data);
+			targetedMessage = new Message(this.ai, data, false);
 		}
 		const result = await this.handleAiChat(current, targetedMessage);
 
