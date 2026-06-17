@@ -13,7 +13,7 @@ RUN if [ $enable_mecab -ne 0 ]; then apt-get update \
   && cd /opt/mecab-ipadic-neologd \
   && ./bin/install-mecab-ipadic-neologd -n -y \
   && rm -rf /opt/mecab-ipadic-neologd \
-  && echo "dicdir = /usr/lib/x86_64-linux-gnu/mecab/dic/mecab-ipadic-neologd/" > /etc/mecabrc \
+  && echo "dicdir = $(mecab-config --dicdir)/mecab-ipadic-neologd/" > /etc/mecabrc \
   && apt-get purge git make curl xz-utils file -y; fi
 
 COPY . /ai
